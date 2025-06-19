@@ -27,7 +27,7 @@ dataManagement/
 
 ## API Endpoints
 
-### `POST /api/v1/data-management/stock/data`
+### `POST /api/v1/dataManagement/stock/data`
 Recupera dati storici di un titolo.
 
 **Request:**
@@ -40,13 +40,13 @@ Recupera dati storici di un titolo.
 }
 ```
 
-### `GET /api/v1/data-management/stock/info/{symbol}`
+### `GET /api/v1/dataManagement/stock/info/{symbol}`
 Ottieni informazioni dettagliate su un titolo.
 
-### `POST /api/v1/data-management/stock/download`
+### `POST /api/v1/dataManagement/stock/download`
 Scarica dati in formato CSV o Excel.
 
-### `POST /api/v1/data-management/stock/analysis`
+### `POST /api/v1/dataManagement/stock/analysis`
 Esegue analisi statistiche sui dati.
 
 ## Componenti Frontend

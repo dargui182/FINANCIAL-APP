@@ -2,7 +2,7 @@
 Applicazione principale - Orchestrator
 Gestisce il caricamento dei moduli e l'inizializzazione dell'app
 """
-from flask import Flask, render_template, send_from_directory
+from flask import Flask, render_template, send_from_directory, jsonify
 from flask_cors import CORS
 import os
 import sys
@@ -57,6 +57,25 @@ class FinancialApp:
             """Health check endpoint"""
             return {'status': 'healthy', 'modules': len(self.loader.loaded_modules)}
         
+        @self.app.route('/debug/routes')
+        def debug_routes():
+            """Debug endpoint per vedere tutte le routes"""
+            routes = []
+            for rule in self.app.url_map.iter_rules():
+                routes.append({
+                    'endpoint': rule.endpoint,
+                    'methods': list(rule.methods),
+                    'rule': str(rule)
+                })
+            return jsonify({
+                'success': True,
+                'data': {
+                    'total_routes': len(routes),
+                    'routes': routes,
+                    'loaded_modules': self.loader.loaded_modules
+                }
+            })
+        
         # Serve static files per i moduli
         @self.app.route('/modules/<module>/<path:filename>')
         def serve_module_static(module, filename):
@@ -83,6 +102,7 @@ class FinancialApp:
         print(f"Moduli caricati: {', '.join(self.loader.loaded_modules)}")
         print(f"API Prefix: {API_PREFIX}")
         print(f"Server: http://{host}:{port}")
+        print(f"Debug routes: http://{host}:{port}/debug/routes")
         print(f"{'='*50}\n")
         
         # Avvia server

@@ -30,18 +30,46 @@ class ReusableTable {
     }
     
     setColumns(columns) {
+        // Validazione columns
+        if (!Array.isArray(columns)) {
+            console.error('Columns deve essere un array');
+            return this;
+        }
         this.columns = columns;
         return this;
     }
     
     setData(data) {
-        this.data = data;
-        this.filteredData = [...data];
+        // Validazione e normalizzazione dei dati
+        if (!data) {
+            console.warn('Dati vuoti forniti alla tabella');
+            this.data = [];
+            this.filteredData = [];
+        } else if (!Array.isArray(data)) {
+            console.error('I dati devono essere un array, ricevuto:', typeof data, data);
+            this.data = [];
+            this.filteredData = [];
+        } else {
+            this.data = data;
+            this.filteredData = [...data];
+        }
+        
+        this.currentPage = 1; // Reset alla prima pagina
         this.render();
         return this;
     }
     
     render() {
+        if (!this.container) {
+            console.error('Container non disponibile per il rendering');
+            return;
+        }
+        
+        if (!this.columns || !Array.isArray(this.columns)) {
+            this.container.innerHTML = '<div class="table-error">Configurazione colonne mancante</div>';
+            return;
+        }
+        
         this.container.innerHTML = `
             ${this.options.filterable ? this.renderFilter() : ''}
             <div class="table-wrapper">
@@ -88,6 +116,11 @@ class ReusableTable {
     }
     
     renderBody() {
+        // Gestisci caso array vuoto
+        if (!Array.isArray(this.filteredData) || this.filteredData.length === 0) {
+            return `<tbody><tr><td colspan="${this.columns.length}">Nessun dato disponibile</td></tr></tbody>`;
+        }
+        
         const startIdx = (this.currentPage - 1) * this.options.pageSize;
         const endIdx = startIdx + this.options.pageSize;
         const pageData = this.filteredData.slice(startIdx, endIdx);
@@ -100,7 +133,7 @@ class ReusableTable {
             return `<tr>${cells}</tr>`;
         }).join('');
         
-        return `<tbody>${rows || '<tr><td colspan="${this.columns.length}">Nessun dato disponibile</td></tr>'}</tbody>`;
+        return `<tbody>${rows}</tbody>`;
     }
     
     getCellValue(row, column) {
@@ -108,7 +141,12 @@ class ReusableTable {
         
         // Applica formatter se presente
         if (column.formatter && typeof column.formatter === 'function') {
-            value = column.formatter(value, row);
+            try {
+                value = column.formatter(value, row);
+            } catch (e) {
+                console.error('Errore nel formatter della colonna', column.key, e);
+                value = value;
+            }
         }
         
         return value ?? '';
@@ -116,6 +154,10 @@ class ReusableTable {
     
     renderPagination() {
         const totalPages = Math.ceil(this.filteredData.length / this.options.pageSize);
+        
+        if (totalPages <= 1) {
+            return ''; // Non mostrare paginazione se c'è solo una pagina
+        }
         
         return `
             <div class="table-pagination">
@@ -208,6 +250,15 @@ class ReusableTable {
     
     refresh() {
         this.render();
+    }
+    
+    // Metodi di utilità per debugging
+    getData() {
+        return this.data;
+    }
+    
+    getFilteredData() {
+        return this.filteredData;
     }
 }
 

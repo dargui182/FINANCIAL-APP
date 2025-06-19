@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  financial-app:
+    build: .
+    container_name: financial-app
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - DATABASE_URL=sqlite:////app/data/financial_app.db
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - financial-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Future: Database service
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: financial-db
+  #   environment:
+  #     - POSTGRES_DB=financial_app
+  #     - POSTGRES_USER=financial_user
+  #     - POSTGRES_PASSWORD=${DB_PASSWORD:-changeme}
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   networks:
+  #     - financial-network
+  #   restart: unless-stopped
+
+  # Future: Redis for caching
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: financial-cache
+  #   networks:
+  #     - financial-network
+  #   restart: unless-stopped
+
+networks:
+  financial-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

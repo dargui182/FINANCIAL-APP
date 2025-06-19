@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Dati - Financial App</title>
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="/static/core/components/table/table.css">
+    <link rel="stylesheet" href="/static/core/components/notifications/notification.css">
+    <link rel="stylesheet" href="/static/core/components/loader/loader.css">
+    
+    <!-- Module CSS -->
+    <link rel="stylesheet" href="/modules/dataManagement/styles/data-management.css">
+    
+    <style>
+        /* Stili base pagina */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .page-header {
+            background: #fff;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 24px;
+        }
+        
+        .page-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+        
+        .page-subtitle {
+            font-size: 16px;
+            color: #6c757d;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 24px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 24px;
+        }
+        
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1a1a1a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="page-header">
+            <h1 class="page-title">Download Dati Finanziari</h1>
+            <p class="page-subtitle">Scarica dati storici da Yahoo Finance</p>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Form Panel -->
+            <div class="card">
+                <h2 class="card-title">Parametri Download</h2>
+                
+                <form id="download-form">
+                    <!-- Symbol Input -->
+                    <div class="form-group">
+                        <label for="symbol">Simbolo Titolo</label>
+                        <div class="symbol-input-wrapper">
+                            <input type="text" 
+                                   id="symbol" 
+                                   class="form-control" 
+                                   placeholder="Es: AAPL, GOOGL..."
+                                   required>
+                            <div id="symbol-suggestions" class="symbol-suggestions"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Date Range -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="start-date">Data Inizio</label>
+                            <input type="date" 
+                                   id="start-date" 
+                                   class="form-control" 
+                                   required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="end-date">Data Fine</label>
+                            <input type="date" 
+                                   id="end-date" 
+                                   class="form-control" 
+                                   required>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Date Ranges -->
+                    <div class="quick-ranges">
+                        <button type="button" class="quick-range-btn" data-range="1M">1 Mese</button>
+                        <button type="button" class="quick-range-btn" data-range="3M">3 Mesi</button>
+                        <button type="button" class="quick-range-btn" data-range="6M">6 Mesi</button>
+                        <button type="button" class="quick-range-btn" data-range="1Y">1 Anno</button>
+                        <button type="button" class="quick-range-btn" data-range="YTD">YTD</button>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <span class="btn-text">Carica Dati</span>
+                        </button>
+                        
+                        <button type="button" id="download-csv" class="btn btn-secondary" disabled>
+                            Download CSV
+                        </button>
+                        
+                        <button type="button" id="download-excel" class="btn btn-secondary" disabled>
+                            Download Excel
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Info Panel -->
+                <div id="data-info" class="data-info" style="display: none;">
+                    <h3>Informazioni Dati</h3>
+                    <div id="info-content"></div>
+                </div>
+            </div>
+            
+            <!-- Data Display Panel -->
+            <div class="card">
+                <h2 class="card-title">Anteprima Dati</h2>
+                
+                <!-- Stats Summary -->
+                <div id="stats-summary" class="stats-summary" style="display: none;">
+                    <div class="stat-card">
+                        <div class="stat-label">Prezzo Attuale</div>
+                        <div class="stat-value" id="current-price">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Variazione Totale</div>
+                        <div class="stat-value" id="total-change">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Volatilità</div>
+                        <div class="stat-value" id="volatility">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Volume Medio</div>
+                        <div class="stat-value" id="avg-volume">-</div>
+                    </div>
+                </div>
+                
+                <!-- Data Table Container -->
+                <div id="data-table-container" style="display: none;">
+                    <div id="data-table"></div>
+                </div>
+                
+                <!-- Empty State -->
+                <div id="empty-state" class="empty-state">
+                    <svg width="64" height="64" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                    <p>Inserisci i parametri e clicca "Carica Dati" per iniziare</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Core Scripts -->
+    <script src="/static/core/components/table/table.js"></script>
+    <script src="/static/core/components/notifications/notification.js"></script>
+    <script src="/static/core/utils/api-client.js"></script>
+    <script src="/static/core/utils/formatters.js"></script>
+    
+    <!-- Module Scripts -->
+    <script src="/modules/dataManagement/pages/data-download.js"></script>
+</body>
+</html>

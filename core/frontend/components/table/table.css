@@ -1,0 +1,138 @@
+/* Stili per la tabella riusabile */
+.reusable-table-container {
+    width: 100%;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+/* Filtro */
+.table-filter {
+    padding: 16px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.filter-input {
+    width: 100%;
+    max-width: 300px;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.15s ease;
+}
+
+.filter-input:focus {
+    outline: none;
+    border-color: #0066cc;
+    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
+}
+
+/* Wrapper tabella */
+.table-wrapper {
+    overflow-x: auto;
+}
+
+/* Tabella */
+.reusable-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.reusable-table thead {
+    background: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.reusable-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #495057;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.reusable-table th.sortable {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.reusable-table th.sortable:hover {
+    background-color: #e9ecef;
+}
+
+.sort-icon {
+    margin-left: 8px;
+    color: #6c757d;
+    font-size: 12px;
+}
+
+.reusable-table tbody tr {
+    border-bottom: 1px solid #dee2e6;
+    transition: background-color 0.15s ease;
+}
+
+.reusable-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.reusable-table td {
+    padding: 12px 16px;
+    color: #212529;
+}
+
+/* Paginazione */
+.table-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+.page-btn {
+    padding: 6px 12px;
+    border: 1px solid #dee2e6;
+    background: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 14px;
+}
+
+.page-btn:hover:not(:disabled) {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.page-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.page-info {
+    font-size: 14px;
+    color: #6c757d;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .reusable-table {
+        font-size: 12px;
+    }
+    
+    .reusable-table th,
+    .reusable-table td {
+        padding: 8px 12px;
+    }
+    
+    .filter-input {
+        max-width: 100%;
+    }
+}

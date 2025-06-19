@@ -1,0 +1,1 @@
+"""Core package dell'applicazione Financial App"""

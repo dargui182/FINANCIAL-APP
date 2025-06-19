@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial App - Dashboard</title>
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="../static/core/components/notifications/notification.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+        
+        .app-header {
+            background: #1a1a1a;
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .app-title {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .app-subtitle {
+            font-size: 14px;
+            color: #ccc;
+            margin-top: 4px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        
+        .welcome-section {
+            background: #fff;
+            padding: 32px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 32px;
+            text-align: center;
+        }
+        
+        .welcome-title {
+            font-size: 32px;
+            margin-bottom: 16px;
+            color: #1a1a1a;
+        }
+        
+        .welcome-text {
+            font-size: 18px;
+            color: #6c757d;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .modules-section {
+            margin-top: 40px;
+        }
+        
+        .section-title {
+            font-size: 24px;
+            margin-bottom: 24px;
+            color: #1a1a1a;
+        }
+        
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+        }
+        
+        .module-card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 24px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .module-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .module-icon {
+            width: 48px;
+            height: 48px;
+            background: #0066cc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            font-size: 24px;
+            color: white;
+        }
+        
+        .module-name {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1a1a1a;
+        }
+        
+        .module-description {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+        
+        .module-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .module-link {
+            flex: 1;
+            padding: 8px 16px;
+            text-align: center;
+            background: #0066cc;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: background 0.2s ease;
+        }
+        
+        .module-link:hover {
+            background: #0052a3;
+        }
+        
+        .module-link.secondary {
+            background: #6c757d;
+        }
+        
+        .module-link.secondary:hover {
+            background: #5a6268;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 8px;
+        }
+        
+        .status-badge.active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .empty-modules {
+            text-align: center;
+            padding: 60px 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .empty-modules svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+        
+        @media (max-width: 768px) {
+            .modules-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-content">
+            <div>
+                <h1 class="app-title">Financial App</h1>
+                <p class="app-subtitle">Architettura Modulare</p>
+            </div>
+            <div>
+                <span style="color: #4CAF50;">● Sistema Operativo</span>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+            <h2 class="welcome-title">Benvenuto nella Financial App</h2>
+            <p class="welcome-text">
+                Piattaforma modulare per l'analisi e la gestione di dati finanziari.
+                Seleziona un modulo per iniziare.
+            </p>
+        </div>
+        
+        <!-- Modules Section -->
+        <div class="modules-section">
+            <h3 class="section-title">Moduli Disponibili</h3>
+            
+            {% if modules %}
+            <div class="modules-grid">
+                {% for module in modules %}
+                <div class="module-card">
+                    <div class="module-icon">
+                        {% if 'data' in module.name.lower() %}
+                        📊
+                        {% elif 'analysis' in module.name.lower() %}
+                        📈
+                        {% elif 'portfolio' in module.name.lower() %}
+                        💼
+                        {% else %}
+                        📦
+                        {% endif %}
+                    </div>
+                    
+                    <h4 class="module-name">{{ module.display_name }}</h4>
+                    <p class="module-description">{{ module.description }}</p>
+                    
+                    <div class="module-actions">
+                        {% if module.pages %}
+                            {% for page in module.pages %}
+                            <a href="/modules/{{ module.name }}/pages/{{ page }}.html" 
+                               class="module-link">
+                                Apri {{ page.replace('-', ' ').title() }}
+                            </a>
+                            {% endfor %}
+                        {% else %}
+                            <a href="#" class="module-link secondary">
+                                Nessuna pagina disponibile
+                            </a>
+                        {% endif %}
+                    </div>
+                    
+                    <span class="status-badge active">Attivo</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-modules">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
+                    </path>
+                </svg>
+                <p>Nessun modulo caricato</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Core Scripts -->
+    <script src="/static/core/components/notifications/notification.js"></script>
+    
+    <script>
+        // Mostra notifica di benvenuto
+        document.addEventListener('DOMContentLoaded', () => {
+            window.notifications.info('Sistema caricato correttamente', 3000);
+        });
+    </script>
+</body>
+</html>

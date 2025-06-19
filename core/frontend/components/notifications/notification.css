@@ -1,0 +1,118 @@
+/* Sistema di notifiche */
+.notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+.notification {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 300px;
+    max-width: 500px;
+    margin-bottom: 10px;
+    padding: 16px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateX(400px);
+    transition: transform 0.3s ease;
+    pointer-events: all;
+}
+
+.notification.notification-show {
+    transform: translateX(0);
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.notification-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.notification-message {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 12px;
+    transition: color 0.2s ease;
+}
+
+.notification-close:hover {
+    color: #495057;
+}
+
+/* Tipi di notifiche */
+.notification-success {
+    border-left: 4px solid #28a745;
+}
+
+.notification-success .notification-icon {
+    background: #d4edda;
+    color: #28a745;
+}
+
+.notification-error {
+    border-left: 4px solid #dc3545;
+}
+
+.notification-error .notification-icon {
+    background: #f8d7da;
+    color: #dc3545;
+}
+
+.notification-warning {
+    border-left: 4px solid #ffc107;
+}
+
+.notification-warning .notification-icon {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.notification-info {
+    border-left: 4px solid #17a2b8;
+}
+
+.notification-info .notification-icon {
+    background: #d1ecf1;
+    color: #17a2b8;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .notification-container {
+        left: 10px;
+        right: 10px;
+    }
+    
+    .notification {
+        min-width: auto;
+        max-width: 100%;
+    }
+}

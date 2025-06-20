@@ -1,1 +1,1 @@
-"""Moduli dell'applicazione"""
+"""Minute Data Module - Gestione dati a 1 minuto"""

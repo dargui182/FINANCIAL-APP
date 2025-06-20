@@ -38,5 +38,6 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///financial_app.db")
 # Module Registry
 ENABLED_MODULES = [
     "dataManagement",
+    "minuteData"
     # Aggiungi qui altri moduli quando li crei
 ]

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dati Intraday - Financial App</title>
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="/static/core/components/table/table.css">
+    <link rel="stylesheet" href="/static/core/components/notifications/notification.css">
+    <link rel="stylesheet" href="/static/core/components/loader/loader.css">
+    
+    <!-- Module CSS -->
+    <link rel="stylesheet" href="/modules/minuteData/styles/minute-data.css">
+    
+    <style>
+        /* Stili specifici per minute data */
+        .timeframe-selector {
+            display: flex;
+            gap: 8px;
+            margin: 16px 0;
+            flex-wrap: wrap;
+        }
+        
+        .timeframe-btn {
+            padding: 8px 16px;
+            border: 1px solid #dee2e6;
+            background: #fff;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        
+        .timeframe-btn:hover {
+            background: #f8f9fa;
+            border-color: #adb5bd;
+        }
+        
+        .timeframe-btn.active {
+            background: #0066cc;
+            color: #fff;
+            border-color: #0066cc;
+        }
+        
+        .market-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .market-status.open {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .market-status.closed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .data-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .summary-card {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .summary-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        .summary-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #212529;
+        }
+        
+        .warning-banner {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+        
+        .refresh-btn {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            padding: 8px 16px;
+            background: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.15s ease;
+        }
+        
+        .refresh-btn:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="page-header" style="position: relative;">
+            <h1 class="page-title">Dati Intraday (1 Minuto)</h1>
+            <p class="page-subtitle">Visualizza e scarica dati di trading ad alta frequenza</p>
+            
+            <!-- Market Status -->
+            <div id="market-status" class="market-status closed">
+                <span class="status-dot">●</span>
+                <span id="market-text">Mercato Chiuso</span>
+            </div>
+            
+            <!-- Refresh Button -->
+            <button id="refresh-btn" class="refresh-btn" style="display: none;">
+                ↻ Aggiorna
+            </button>
+        </div>
+        
+        <!-- Warning Banner -->
+        <div class="warning-banner">
+            <strong>Nota:</strong> I dati a 1 minuto sono disponibili solo per gli ultimi 30 giorni 
+            e vengono scaricati in blocchi di massimo 7 giorni per volta.
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Control Panel -->
+            <div class="card">
+                <h2 class="card-title">Parametri Download</h2>
+                
+                <form id="minute-form">
+                    <!-- Symbol Input -->
+                    <div class="form-group">
+                        <label for="symbol">Simbolo Titolo</label>
+                        <input type="text" 
+                               id="symbol" 
+                               class="form-control" 
+                               placeholder="Es: AAPL, GOOGL..."
+                               required>
+                    </div>
+                    
+                    <!-- Date Selection -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="start-date">Data Inizio</label>
+                            <input type="date" 
+                                   id="start-date" 
+                                   class="form-control" 
+                                   required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="end-date">Data Fine</label>
+                            <input type="date" 
+                                   id="end-date" 
+                                   class="form-control" 
+                                   required>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Ranges -->
+                    <div class="quick-ranges">
+                        <button type="button" class="quick-range-btn" data-range="TODAY">Oggi</button>
+                        <button type="button" class="quick-range-btn" data-range="YESTERDAY">Ieri</button>
+                        <button type="button" class="quick-range-btn" data-range="3D">3 Giorni</button>
+                        <button type="button" class="quick-range-btn" data-range="1W">1 Settimana</button>
+                        <button type="button" class="quick-range-btn" data-range="2W">2 Settimane</button>
+                        <button type="button" class="quick-range-btn" data-range="MAX">Max (30 giorni)</button>
+                    </div>
+                    
+                    <!-- Options -->
+                    <div class="advanced-options">
+                        <h4>Opzioni</h4>
+                        
+                        <div class="option-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="use-cache" checked>
+                                <span>Usa cache locale</span>
+                            </label>
+                            <small class="help-text">Velocizza il caricamento usando dati salvati</small>
+                        </div>
+                        
+                        <div class="option-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="market-hours-only">
+                                <span>Solo ore di mercato</span>
+                            </label>
+                            <small class="help-text">Filtra dati 9:30-16:00 ET</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            Carica Dati
+                        </button>
+                        
+                        <button type="button" id="clear-cache" class="btn btn-danger" style="display: none;">
+                            Cancella Cache
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Cache Info -->
+                <div id="cache-info" class="cache-status" style="display: none;">
+                    <h3>Cache Info</h3>
+                    <div id="cache-content"></div>
+                </div>
+            </div>
+            
+            <!-- Data Display -->
+            <div class="card">
+                <h2 class="card-title">Visualizzazione Dati</h2>
+                
+                <!-- Timeframe Selector -->
+                <div class="timeframe-selector" id="timeframe-selector" style="display: none;">
+                    <span style="align-self: center; margin-right: 8px;">Aggrega in:</span>
+                    <button class="timeframe-btn active" data-timeframe="1m">1 Min</button>
+                    <button class="timeframe-btn" data-timeframe="5m">5 Min</button>
+                    <button class="timeframe-btn" data-timeframe="15m">15 Min</button>
+                    <button class="timeframe-btn" data-timeframe="30m">30 Min</button>
+                    <button class="timeframe-btn" data-timeframe="1h">1 Ora</button>
+                </div>
+                
+                <!-- Data Summary -->
+                <div id="data-summary" class="data-summary" style="display: none;">
+                    <div class="summary-card">
+                        <div class="summary-label">Record Totali</div>
+                        <div class="summary-value" id="total-records">-</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Giorni Trading</div>
+                        <div class="summary-value" id="trading-days">-</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Primo Record</div>
+                        <div class="summary-value" id="first-record" style="font-size: 16px;">-</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Ultimo Record</div>
+                        <div class="summary-value" id="last-record" style="font-size: 16px;">-</div>
+                    </div>
+                </div>
+                
+                <!-- Download Options -->
+                <div id="download-options" style="display: none; margin: 16px 0;">
+                    <button class="btn btn-secondary" id="download-csv">
+                        Download CSV
+                    </button>
+                    <button class="btn btn-secondary" id="download-excel">
+                        Download Excel
+                    </button>
+                </div>
+                
+                <!-- Data Table -->
+                <div id="data-table-container" style="display: none;">
+                    <div id="data-table"></div>
+                </div>
+                
+                <!-- Empty State -->
+                <div id="empty-state" class="empty-state">
+                    <svg width="64" height="64" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z">
+                        </path>
+                    </svg>
+                    <p>Inserisci i parametri e clicca "Carica Dati" per iniziare</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Core Scripts -->
+    <script src="/static/core/components/table/table.js"></script>
+    <script src="/static/core/components/notifications/notification.js"></script>
+    <script src="/static/core/components/loader/loader.js"></script>
+    <script src="/static/core/utils/api-client.js"></script>
+    <script src="/static/core/utils/formatters.js"></script>
+    
+    <!-- Module Script -->
+    <script src="/modules/minuteData/pages/minute-data.js"></script>
+</body>
+</html>

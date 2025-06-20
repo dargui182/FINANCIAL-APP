@@ -134,6 +134,35 @@
                         <button type="button" class="quick-range-btn" data-range="6M">6 Mesi</button>
                         <button type="button" class="quick-range-btn" data-range="1Y">1 Anno</button>
                         <button type="button" class="quick-range-btn" data-range="YTD">YTD</button>
+                        <button type="button" class="quick-range-btn" data-range="ALL">Storico Completo</button>
+                    </div>
+                    
+                    <!-- Advanced Options -->
+                    <div class="advanced-options">
+                        <h4>Opzioni Avanzate</h4>
+                        
+                        <div class="option-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="use-adjusted" checked>
+                                <span>Usa prezzi Adjusted</span>
+                            </label>
+                            <small class="help-text">Include aggiustamenti per split e dividendi</small>
+                        </div>
+                        
+                        <div class="option-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="use-cache" checked>
+                                <span>Usa cache locale</span>
+                            </label>
+                            <small class="help-text">Scarica solo dati mancanti</small>
+                        </div>
+                        
+                        <div class="option-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="include-analysis">
+                                <span>Includi analisi nel download</span>
+                            </label>
+                        </div>
                     </div>
                     
                     <!-- Actions -->
@@ -156,6 +185,15 @@
                 <div id="data-info" class="data-info" style="display: none;">
                     <h3>Informazioni Dati</h3>
                     <div id="info-content"></div>
+                </div>
+                
+                <!-- Cache Status Panel -->
+                <div id="cache-status" class="cache-status" style="display: none;">
+                    <h3>Stato Cache</h3>
+                    <div id="cache-content"></div>
+                    <button type="button" id="clear-cache" class="btn btn-small btn-danger">
+                        Cancella Cache
+                    </button>
                 </div>
             </div>
             
@@ -204,6 +242,7 @@
     <!-- Core Scripts -->
     <script src="/static/core/components/table/table.js"></script>
     <script src="/static/core/components/notifications/notification.js"></script>
+    <script src="/static/core/components/loader/loader.js"></script>
     <script src="/static/core/utils/api-client.js"></script>
     <script src="/static/core/utils/formatters.js"></script>
     

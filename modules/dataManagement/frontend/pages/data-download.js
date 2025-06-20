@@ -5,6 +5,7 @@ class DataDownloadManager {
     constructor() {
         this.currentData = null;
         this.dataTable = null;
+        this.apiBasePath = '/api/v1/data-management'; // Path corretto in kebab-case
         this.init();
     }
     
@@ -33,11 +34,6 @@ class DataDownloadManager {
         
         document.getElementById('download-excel').addEventListener('click', () => {
             this.downloadData('excel');
-        });
-        
-        // Clear cache button
-        document.getElementById('clear-cache').addEventListener('click', () => {
-            this.clearCache();
         });
         
         // Symbol search
@@ -98,10 +94,6 @@ class DataDownloadManager {
             case 'YTD':
                 startDate = new Date('2024-01-01');
                 break;
-            case 'ALL':
-                // Per storico completo useremo un endpoint specifico
-                this.loadFullHistory();
-                return;
         }
         
         document.getElementById('end-date').value = endDate.toISOString().split('T')[0];
@@ -121,10 +113,13 @@ class DataDownloadManager {
     
     async searchSymbols(query) {
         try {
-            const response = await window.apiClient.get('/dataManagement/symbols/search', { q: query });
+            console.log('Ricerca simboli per:', query);
             
-            if (response.success && response.data && response.data.data && Array.isArray(response.data.data)) {
-                this.showSuggestions(response.data.data);
+            // Usa l'endpoint corretto
+            const response = await this.makeApiCall('GET', `/symbols/search?q=${encodeURIComponent(query)}`);
+            
+            if (response.success && response.data && Array.isArray(response.data)) {
+                this.showSuggestions(response.data);
             } else {
                 console.log('Nessun dato valido ricevuto:', response);
                 this.hideSuggestions();
@@ -197,184 +192,105 @@ class DataDownloadManager {
         ]);
     }
     
+    async makeApiCall(method, endpoint, data = null) {
+        const url = `${this.apiBasePath}${endpoint}`;
+        console.log(`${method} ${url}`);
+        
+        const options = {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        };
+        
+        if (data && (method === 'POST' || method === 'PUT')) {
+            options.body = JSON.stringify(data);
+        }
+        
+        try {
+            const response = await fetch(url, options);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            // Controlla se la risposta è JSON
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                const result = await response.json();
+                return result;
+            } else {
+                // Per download di file
+                return response;
+            }
+        } catch (error) {
+            console.error(`Errore API ${method} ${url}:`, error);
+            throw error;
+        }
+    }
+    
     async loadData() {
         // Mostra loading
-        window.loader.showOverlay('Caricamento dati...');
+        this.showLoading();
         
         const formData = {
             symbol: document.getElementById('symbol').value.toUpperCase(),
             start_date: document.getElementById('start-date').value,
-            end_date: document.getElementById('end-date').value,
-            use_cache: document.getElementById('use-cache').checked,
-            adjusted: document.getElementById('use-adjusted').checked
+            end_date: document.getElementById('end-date').value
         };
         
         try {
-            // Usa nuovo endpoint v2
-            const response = await window.apiClient.post('/dataManagement/stock/data/v2', formData);
+            console.log('Caricamento dati per:', formData);
             
-            console.log('Risposta API v2:', response); // Debug
+            // Carica dati principali
+            const response = await this.makeApiCall('POST', '/stock/data', formData);
             
-            if (response.success && response.data && response.data.data) {
-                this.currentData = response.data.data;
-                this.displayData(response.data.data);
+            console.log('Risposta API:', response);
+            
+            if (response.success && response.data) {
+                this.currentData = response.data;
+                this.displayData(response.data);
                 
                 // Carica analisi
                 this.loadAnalysis(formData);
                 
-                // Mostra stato cache
-                this.checkCacheStatus(formData.symbol);
-                
                 // Abilita download
                 document.getElementById('download-csv').disabled = false;
                 document.getElementById('download-excel').disabled = false;
                 
-                const cacheMsg = response.data.data.from_cache ? ' (da cache)' : '';
-                window.notifications.success(`Dati caricati con successo${cacheMsg}!`);
+                window.notifications.success('Dati caricati con successo!');
             } else {
-                const errorMsg = response.error || response.data?.error || 'Risposta API non valida';
+                const errorMsg = response.error || 'Risposta API non valida';
                 window.notifications.error(`Errore: ${errorMsg}`);
+                this.hideLoading();
             }
         } catch (error) {
             console.error('Errore caricamento dati:', error);
             window.notifications.error(`Errore di rete: ${error.message}`);
-        } finally {
-            window.loader.hideOverlay();
-        }
-    }
-    
-    async loadFullHistory() {
-        const symbol = document.getElementById('symbol').value.toUpperCase();
-        
-        if (!symbol) {
-            window.notifications.warning('Inserisci un simbolo prima di caricare lo storico completo');
-            return;
-        }
-        
-        window.loader.showOverlay('Caricamento storico completo...');
-        
-        try {
-            const response = await window.apiClient.post('/dataManagement/stock/history/full', {
-                symbol: symbol,
-                adjusted: document.getElementById('use-adjusted').checked
-            });
-            
-            if (response.success && response.data && response.data.data) {
-                this.currentData = response.data.data;
-                this.displayData(response.data.data);
-                
-                // Aggiorna date nei campi
-                if (response.data.data.first_date && response.data.data.last_date) {
-                    document.getElementById('start-date').value = response.data.data.first_date;
-                    document.getElementById('end-date').value = response.data.data.last_date;
-                }
-                
-                // Carica analisi
-                this.loadAnalysis({
-                    symbol: symbol,
-                    start_date: response.data.data.first_date,
-                    end_date: response.data.data.last_date
-                });
-                
-                // Evidenzia bottone ALL
-                document.querySelectorAll('.quick-range-btn').forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.range === 'ALL');
-                });
-                
-                // Abilita download
-                document.getElementById('download-csv').disabled = false;
-                document.getElementById('download-excel').disabled = false;
-                
-                window.notifications.success(`Storico completo caricato: ${response.data.data.count} record`);
-            } else {
-                window.notifications.error(`Errore: ${response.error || 'Caricamento fallito'}`);
-            }
-        } catch (error) {
-            console.error('Errore caricamento storico:', error);
-            window.notifications.error(`Errore: ${error.message}`);
-        } finally {
-            window.loader.hideOverlay();
+            this.hideLoading();
         }
     }
     
     async loadAnalysis(params) {
         try {
-            const response = await window.apiClient.post('/dataManagement/stock/analysis', params);
+            const response = await this.makeApiCall('POST', '/stock/analysis', params);
             
-            if (response.success && response.data && response.data.data) {
-                this.displayAnalysis(response.data.data);
+            if (response.success && response.data) {
+                this.displayAnalysis(response.data);
             }
         } catch (error) {
             console.error('Errore caricamento analisi:', error);
         }
     }
     
-    async checkCacheStatus(symbol) {
-        try {
-            const dataType = document.getElementById('use-adjusted').checked ? 'dailyAdjusted' : 'daily';
-            const response = await window.apiClient.get(`/dataManagement/cache/stats/${symbol}`, {
-                data_type: dataType
-            });
-            
-            if (response.success && response.data && response.data.data) {
-                const stats = response.data.data;
-                document.getElementById('cache-status').style.display = 'block';
-                document.getElementById('cache-content').innerHTML = `
-                    <p><strong>Tipo dati:</strong> ${stats.data_type}</p>
-                    <p><strong>Record salvati:</strong> ${stats.record_count}</p>
-                    <p><strong>Periodo:</strong> ${stats.first_date} - ${stats.last_date}</p>
-                    <p><strong>Date mancanti:</strong> ${stats.missing_dates}</p>
-                    <p><strong>Dimensione file:</strong> ${stats.file_size_kb.toFixed(2)} KB</p>
-                `;
-                
-                // Aggiungi listener per clear cache
-                document.getElementById('clear-cache').onclick = () => this.clearCache(symbol, dataType);
-            } else {
-                document.getElementById('cache-status').style.display = 'none';
-            }
-        } catch (error) {
-            console.error('Errore verifica cache:', error);
-            document.getElementById('cache-status').style.display = 'none';
-        }
-    }
-    
-    async clearCache(symbol, dataType) {
-        if (!symbol) {
-            symbol = document.getElementById('symbol').value.toUpperCase();
-            dataType = document.getElementById('use-adjusted').checked ? 'dailyAdjusted' : 'daily';
-        }
-        
-        if (!symbol) {
-            window.notifications.warning('Inserisci un simbolo');
-            return;
-        }
-        
-        if (!confirm(`Cancellare la cache per ${symbol} (${dataType})?`)) {
-            return;
-        }
-        
-        try {
-            const response = await window.apiClient.delete(`/dataManagement/cache/clear/${symbol}?data_type=${dataType}`);
-            
-            if (response.success) {
-                window.notifications.success('Cache cancellata con successo');
-                document.getElementById('cache-status').style.display = 'none';
-            } else {
-                window.notifications.error(`Errore: ${response.error || response.data?.message || 'Errore sconosciuto'}`);
-            }
-        } catch (error) {
-            console.error('Errore cancellazione cache:', error);
-            window.notifications.error(`Errore: ${error.message}`);
-        }
-    }
-    
     displayData(data) {
-        console.log('Display data chiamato con:', data); // Debug
+        console.log('Display data chiamato con:', data);
         
         // Validazione dati
         if (!data || typeof data !== 'object') {
             console.error('Dati non validi:', data);
             window.notifications.error('Dati ricevuti non validi');
+            this.hideLoading();
             return;
         }
         
@@ -387,7 +303,6 @@ class DataDownloadManager {
             <p><strong>Simbolo:</strong> ${data.symbol || 'N/A'}</p>
             <p><strong>Periodo:</strong> ${data.first_date || 'N/A'} - ${data.last_date || 'N/A'}</p>
             <p><strong>Record totali:</strong> ${data.count || 0}</p>
-            ${data.from_cache ? '<p><strong>Fonte:</strong> Cache locale</p>' : ''}
         `;
         
         // Mostra tabella
@@ -400,37 +315,11 @@ class DataDownloadManager {
             window.notifications.error('Formato dati non valido');
             this.dataTable.setData([]);
         } else {
-            console.log('Settando dati tabella:', records.length, 'record'); // Debug
-            
-            // Se abbiamo dati adjusted, mostra colonne appropriate
-            if (records.length > 0 && records[0].adj_close !== undefined) {
-                this.dataTable.setColumns([
-                    { key: 'date', label: 'Data' },
-                    { 
-                        key: 'open', 
-                        label: 'Apertura',
-                        formatter: (value) => value ? `$${value.toFixed(2)}` : '-'
-                    },
-                    { 
-                        key: 'close', 
-                        label: 'Chiusura',
-                        formatter: (value) => value ? `$${value.toFixed(2)}` : '-'
-                    },
-                    { 
-                        key: 'adj_close', 
-                        label: 'Chiusura Adj.',
-                        formatter: (value) => value ? `$${value.toFixed(2)}` : '-'
-                    },
-                    { 
-                        key: 'volume', 
-                        label: 'Volume',
-                        formatter: (value) => value ? value.toLocaleString() : '-'
-                    }
-                ]);
-            }
-            
+            console.log('Settando dati tabella:', records);
             this.dataTable.setData(records);
         }
+        
+        this.hideLoading();
     }
     
     displayAnalysis(analysis) {
@@ -481,67 +370,57 @@ class DataDownloadManager {
             symbol: this.currentData.symbol,
             start_date: document.getElementById('start-date').value,
             end_date: document.getElementById('end-date').value,
-            format: format,
-            adjusted: document.getElementById('use-adjusted').checked,
-            include_analysis: document.getElementById('include-analysis').checked
+            format: format
         };
         
         window.notifications.info(`Preparazione download ${format.toUpperCase()}...`);
         
         try {
-            // Usa endpoint v2
-            const response = await fetch('/api/v1/data-management/stock/download/v2', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(params)
-            });
+            // Usa il metodo API centralizzato
+            const response = await this.makeApiCall('POST', '/stock/download', params);
             
-            console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers);
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Download failed: ${response.status} - ${errorText}`);
+            // Se arriviamo qui, response è un oggetto Response per il file
+            if (response instanceof Response) {
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                
+                // Nome file con timestamp per evitare cache
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/[:]/g, '-');
+                const filename = `${params.symbol}_data_${timestamp}.${format}`;
+                
+                // Crea link per download
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Cleanup
+                window.URL.revokeObjectURL(downloadUrl);
+                
+                window.notifications.success(`Download ${format.toUpperCase()} completato: ${filename}`);
+            } else {
+                // Errore
+                throw new Error(response.error || 'Download failed');
             }
-            
-            // Controlla content-type
-            const contentType = response.headers.get('content-type');
-            console.log('Content-Type:', contentType);
-            
-            if (contentType && contentType.includes('application/json')) {
-                // Risposta JSON (errore)
-                const result = await response.json();
-                throw new Error(result.error || 'Download failed');
-            }
-            
-            // È un file - procedi con il download
-            const blob = await response.blob();
-            const downloadUrl = window.URL.createObjectURL(blob);
-            
-            // Nome file con timestamp e tipo
-            const timestamp = new Date().toISOString().slice(0, 19).replace(/[:]/g, '-');
-            const adjustedLabel = params.adjusted ? 'adjusted' : 'regular';
-            const filename = `${params.symbol}_${adjustedLabel}_${timestamp}.${format}`;
-            
-            // Crea link per download
-            const link = document.createElement('a');
-            link.href = downloadUrl;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            // Cleanup
-            window.URL.revokeObjectURL(downloadUrl);
-            
-            window.notifications.success(`Download ${format.toUpperCase()} completato: ${filename}`);
             
         } catch (error) {
             console.error('Errore download completo:', error);
             window.notifications.error(`Errore download: ${error.message}`);
         }
+    }
+    
+    showLoading() {
+        document.getElementById('empty-state').innerHTML = `
+            <div class="loader"></div>
+            <p>Caricamento dati in corso...</p>
+        `;
+        document.getElementById('empty-state').style.display = 'block';
+    }
+    
+    hideLoading() {
+        // Loader verrà nascosto quando si mostra il contenuto
     }
 }
 
